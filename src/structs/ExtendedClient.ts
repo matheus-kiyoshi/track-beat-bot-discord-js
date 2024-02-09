@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 
 import dotenv from "dotenv";
+import { Player } from "discord-player";
 dotenv.config();
 
 export class ExtendedClient extends Client {
@@ -31,6 +32,8 @@ export class ExtendedClient extends Client {
   public start() {
     this.registerModules();
     this.registerEvents();
+    const player = new Player(this)
+    player.extractors.loadDefault().then(r => console.log('Extractors loaded successfully'));
     this.login(process.env.BOT_TOKEN);
   }
 
