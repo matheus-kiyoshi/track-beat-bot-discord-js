@@ -16,7 +16,10 @@ export class ExtendedClient extends Client {
 
   constructor() {
     super({
-      intents: Object.keys(IntentsBitField.Flags) as BitFieldResolvable<GatewayIntentsString, number>,
+      intents: [
+        'GuildVoiceStates',
+        Object.keys(IntentsBitField.Flags) as BitFieldResolvable<GatewayIntentsString, number>
+      ],
       partials: [
         Partials.Channel,
         Partials.GuildMember,
