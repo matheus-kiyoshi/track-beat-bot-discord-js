@@ -1,12 +1,12 @@
 import { ApplicationCommandOptionType, ApplicationCommandType } from "discord.js";
 import { Command } from "../../structs/types/Command";
-import { QueryType, useMainPlayer } from "discord-player";
 import { voiceChannelVerify } from "../../utils/voiceChannelVerify";
+import { QueryType, useMainPlayer, useQueue } from "discord-player";
 
 export default new Command({
-  name: "play",
+  name: "playnow",
   type: ApplicationCommandType.ChatInput,
-  description: "Play a song by name or URL",
+  description: "Play a song before the next song in the queue",
   options: [
     {
       name: "query",
@@ -34,21 +34,15 @@ export default new Command({
           content: `⏱ | Loading your ${searchResult.playlist ? 'playlist' : 'track'}...`,
       });
 
+      const queue = useQueue(interaction.guild?.id as string);
       try {
-        await player.play(interaction.member?.voice.channel.id, searchResult, {
-            nodeOptions: {
-                metadata: {
-                    channel: interaction.channel,
-                    client: interaction.guild?.members.me,
-                    requestedBy: interaction.user.username,
-                },
-                leaveOnEmptyCooldown: 300000,
-                leaveOnEmpty: true,
-                leaveOnEnd: false,
-                bufferingTimeout: 0,
-                volume: 10,
-            },
-        });
+        if (!queue || !queue.connection) await queue?.connect(interaction.member?.voice.channel as any);
+
+        searchResult.playlist 
+          ? searchResult.playlist.tracks.map((track, index) => queue?.node.insert(track, index))
+          : queue?.node.insert(searchResult.tracks[0], 0);  
+
+        !queue?.currentTrack && await player.play()
 
         await interaction.editReply({
             content: `🎶 | Now playing: [${searchResult.playlist ? 'Playlist' : 'Track'}](${searchResult.playlist ? searchResult.tracks[0].url : searchResult.tracks[0].url}) - \`${searchResult.playlist ? searchResult.tracks.length : ''}${searchResult.tracks[0].title}\``,
